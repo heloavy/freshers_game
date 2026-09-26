@@ -111,7 +111,7 @@ export const LeaderboardModal: React.FC<Props> = ({
               <p className="text-xs font-mono text-slate-400 max-w-md mx-auto leading-relaxed">
                 {search
                   ? `No teams found matching "${search}". Try searching for another team ID or name.`
-                  : 'The database is completely clean with 0 squads registered. Teams will only appear on this live leaderboard after they choose their slot (TEAM_01 to TEAM_50), enter their squad name, and launch the hunt. Teams who complete all levels in less time and score more points are ranked highest!'}
+                  : 'The database is completely clean with 0 squads registered. Teams will only appear on this live leaderboard after they choose their slot (TEAM_01 to TEAM_70), enter their squad name, and launch the hunt. Teams who complete all levels in less time and score more points are ranked highest!'}
               </p>
             </div>
           ) : (

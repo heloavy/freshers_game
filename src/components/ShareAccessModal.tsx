@@ -243,7 +243,7 @@ export const ShareAccessModal: React.FC<Props> = ({ isOpen, onClose, onOpenLeade
                   <span>Select Squad Slot</span>
                 </div>
                 <p className="text-[11px] text-slate-400 leading-relaxed">
-                  Each team selects an open slot (e.g. TEAM_01 to TEAM_50) or enters their custom squad ID.
+                  Each team selects an open slot (e.g. TEAM_01 to TEAM_70) or enters their custom squad ID.
                 </p>
               </div>
 

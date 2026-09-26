@@ -942,7 +942,7 @@ export const AdminControlModal: React.FC<Props> = ({
                       Database is currently clean and empty!
                     </p>
                     <p className="text-slate-500 font-mono text-xs mt-1.5 max-w-md mx-auto">
-                      No squads have registered yet. When participants pick a slot from <strong className="text-cyan-400">TEAM_01 to TEAM_50</strong> and launch, their squad name and live score will appear here and on the leaderboard.
+                      No squads have registered yet. When participants pick a slot from <strong className="text-cyan-400">TEAM_01 to TEAM_70</strong> and launch, their squad name and live score will appear here and on the leaderboard.
                     </p>
                   </div>
                 ) : (

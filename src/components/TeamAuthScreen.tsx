@@ -60,7 +60,7 @@ export const TeamAuthScreen: React.FC<Props> = ({
 
     if (!finalTeamId) {
       sounds.playBuzzer();
-      setValidationError('Please specify or select a Team Slot (TEAM_01 to TEAM_50)!');
+      setValidationError('Please specify or select a Team Slot (TEAM_01 to TEAM_70)!');
       return;
     }
 
@@ -169,7 +169,7 @@ export const TeamAuthScreen: React.FC<Props> = ({
 
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/80 border border-cyan-400/50 text-cyan-300 font-mono text-xs uppercase tracking-widest mb-4">
           <Sparkles className="w-3.5 h-3.5" />
-          <span>SLOTS: TEAM_01 TO TEAM_50 &bull; CLEAN DATABASE &bull; RANKINGS BY SCORE</span>
+          <span>SLOTS: TEAM_01 TO TEAM_70 &bull; CLEAN DATABASE &bull; RANKINGS BY SCORE</span>
         </div>
 
         <h1 className="text-3xl md:text-5xl lg:text-6xl font-display font-black text-white tracking-wide uppercase mb-3">
@@ -177,7 +177,7 @@ export const TeamAuthScreen: React.FC<Props> = ({
         </h1>
 
         <p className="text-slate-300 text-xs md:text-base font-mono max-w-2xl mx-auto mb-8 leading-relaxed">
-          Select your squad slot from <span className="text-cyan-300 font-bold">TEAM_01 to TEAM_50</span> in sequence, enter your team details, and launch the hunt. Only after submitting your details and launching will your squad appear on the live leaderboard ranked by score!
+          Select your squad slot from <span className="text-cyan-300 font-bold">TEAM_01 to TEAM_70</span> in sequence, enter your team details, and launch the hunt. Only after submitting your details and launching will your squad appear on the live leaderboard ranked by score!
         </p>
 
         {/* Team Authentication & Avatar Selection Card */}
@@ -216,19 +216,19 @@ export const TeamAuthScreen: React.FC<Props> = ({
                 </div>
               </div>
             )}
-            {/* Team ID Selection (Sequential slots TEAM_01 to TEAM_50) */}
+            {/* Team ID Selection (Sequential slots TEAM_01 to TEAM_70) */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="text-slate-300 font-bold flex items-center gap-1.5">
                   <Users className="w-3.5 h-3.5 text-cyan-400" />
-                  <span>SELECT TEAM SLOT (TEAM_01 TO TEAM_50):</span>
+                  <span>SELECT TEAM SLOT (TEAM_01 TO TEAM_70):</span>
                 </label>
                 <button
                   type="button"
                   onClick={() => setUseCustomId(!useCustomId)}
                   className="text-[11px] text-cyan-400 hover:text-cyan-300 underline cursor-pointer"
                 >
-                  {useCustomId ? '← Pick from TEAM_01-50' : '+ Custom Team Code'}
+                  {useCustomId ? '← Pick from TEAM_01-70' : '+ Custom Team Code'}
                 </button>
               </div>
 

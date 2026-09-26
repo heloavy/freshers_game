@@ -54,8 +54,8 @@ export const TEAM_AVATARS = [
   { id: 'crown', emoji: '👑', label: 'Monarch Prime' },
 ];
 
-// 50 Sequential Standard Team Slots: TEAM_01 to TEAM_50
-export const STANDARD_TEAM_SLOTS: string[] = Array.from({ length: 50 }, (_, i) => {
+// 70 Sequential Standard Team Slots: TEAM_01 to TEAM_70
+export const STANDARD_TEAM_SLOTS: string[] = Array.from({ length: 70 }, (_, i) => {
   const num = i + 1;
   const pad = num < 10 ? `0${num}` : `${num}`;
   return `TEAM_${pad}`;
