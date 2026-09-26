@@ -1,0 +1,6 @@
+{
+  "name": "Digital Tech Treasure Hunt 2026",
+  "description": "Zero-Gravity Cyberpunk Matrix interactive technical treasure hunt with 5 mini-games, real-time Supabase leaderboard, zero-G physics, and Web Audio SFX.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
