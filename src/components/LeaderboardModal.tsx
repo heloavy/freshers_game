@@ -61,7 +61,7 @@ export const LeaderboardModal: React.FC<Props> = ({
                 </span>
               </div>
               <p className="text-xs text-slate-400 font-mono mt-0.5">
-                Dynamic rankings across all {filtered.length} active squads &bull; Ranked by: Completed All Levels (5/5) &gt; More Points &gt; Less Time Taken
+                Dynamic rankings across all {filtered.length} active squads &bull; Ranked by: Completed All Levels (5/5) &gt; Fastest Total Time (Elapsed + Penalties) &gt; Higher Score
               </p>
             </div>
           </div>

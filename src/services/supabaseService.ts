@@ -279,26 +279,28 @@ class SupabaseService {
       if (!aCompleted && bCompleted) return 1;
 
       // 3. If both completed all levels:
-      // Organised by more points scored and less time to complete all levels
+      // In a Treasure Hunt, fastest total completion time (Elapsed + Penalties) takes 1st priority!
+      // Tie-breaker: higher score, then lesser raw elapsed time
       if (aCompleted && bCompleted) {
-        if (b.score !== a.score) {
-          return b.score - a.score;
-        }
         if (totalTimeA !== totalTimeB) {
-          return totalTimeA - totalTimeB;
+          return totalTimeA - totalTimeB; // Lower total time = higher rank
+        }
+        if (b.score !== a.score) {
+          return b.score - a.score; // Tie-breaker: higher score
         }
         return (a.elapsed_time || 0) - (b.elapsed_time || 0);
       }
 
       // 4. For teams still in progress:
+      // Highest sector reached > Lowest total time > Highest score
       if (b.current_level !== a.current_level) {
         return b.current_level - a.current_level;
       }
-      if (b.score !== a.score) {
-        return b.score - a.score;
-      }
       if (totalTimeA !== totalTimeB) {
         return totalTimeA - totalTimeB;
+      }
+      if (b.score !== a.score) {
+        return b.score - a.score;
       }
       return (a.elapsed_time || 0) - (b.elapsed_time || 0);
     });
