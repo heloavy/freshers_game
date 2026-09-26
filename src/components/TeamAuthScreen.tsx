@@ -32,7 +32,62 @@ export const TeamAuthScreen: React.FC<Props> = ({
   const [validationError, setValidationError] = useState<string>('');
   const [isMuted, setIsMuted] = useState<boolean>(sounds.isMuted());
 
-  const isTerminalLocked = typeof window !== 'undefined' && localStorage.getItem('dtth_terminal_locked') === 'true';
+  const [isTerminalLocked, setIsTerminalLocked] = useState<boolean>(
+    () => typeof window !== 'undefined' && localStorage.getItem('dtth_terminal_locked') === 'true'
+  );
+
+  // Live Terminal Lock Check: Automatically lifts the attempt lock if the team was deleted in Supabase
+  React.useEffect(() => {
+    try {
+      const locked = localStorage.getItem('dtth_terminal_locked') === 'true';
+      const completedTeam = localStorage.getItem('dtth_completed_team');
+      if (locked && completedTeam) {
+        const stillInDb = teams.some(
+          (t) => t.team_name && t.team_name.trim().toLowerCase() === completedTeam.trim().toLowerCase()
+        );
+        if (!stillInDb) {
+          // Team record was deleted in the DB! Immediately unlock terminal for this machine
+          localStorage.removeItem('dtth_terminal_locked');
+          localStorage.removeItem('dtth_completed_team');
+          localStorage.removeItem('dtth_completed_state');
+          localStorage.removeItem('dtth_active_game');
+          setIsTerminalLocked(false);
+          setValidationError('');
+        } else {
+          setIsTerminalLocked(true);
+        }
+      } else if (!locked) {
+        setIsTerminalLocked(false);
+      }
+    } catch {}
+  }, [teams]);
+
+  // Live DB Deletion Reflection: If an occupied slot or registered squad was deleted from the DB,
+  // clear out any stale validation errors immediately so user doesn't have to reload
+  React.useEffect(() => {
+    if (validationError) {
+      const occupiedMatch = validationError.match(/Slot ([A-Z0-9_-]+) is already occupied/);
+      if (occupiedMatch) {
+        const slotId = occupiedMatch[1];
+        const isStillOccupied = teams.some(
+          (t) => t.team_id.toUpperCase() === slotId.toUpperCase() && t.team_name && t.team_name.trim().length > 0
+        );
+        if (!isStillOccupied) {
+          setValidationError('');
+        }
+      }
+      const squadMatch = validationError.match(/Squad "([^"]+)" has already/);
+      if (squadMatch) {
+        const squadName = squadMatch[1].trim().toLowerCase();
+        const isStillRegistered = teams.some(
+          (t) => t.team_name && t.team_name.trim().toLowerCase() === squadName
+        );
+        if (!isStillRegistered) {
+          setValidationError('');
+        }
+      }
+    }
+  }, [teams, validationError]);
 
   // Synchronize team selection and check if occupied
   const handleSelectTeam = (id: string) => {
@@ -89,9 +144,18 @@ export const TeamAuthScreen: React.FC<Props> = ({
     try {
       const completedTeam = localStorage.getItem('dtth_completed_team');
       if (completedTeam && completedTeam.trim().toLowerCase() === normalizedName) {
-        sounds.playBuzzer();
-        setValidationError(`⚠️ Squad "${cleanTeamName}" has already completed the hunt and finalized their score.`);
-        return;
+        const isStillInDb = teams.some(
+          (t) => t.team_name && t.team_name.trim().toLowerCase() === normalizedName
+        );
+        if (isStillInDb) {
+          sounds.playBuzzer();
+          setValidationError(`⚠️ Squad "${cleanTeamName}" has already completed the hunt and finalized their score.`);
+          return;
+        } else {
+          // If deleted in the database, clear local storage locks and proceed
+          localStorage.removeItem('dtth_terminal_locked');
+          localStorage.removeItem('dtth_completed_team');
+        }
       }
     } catch {}
 

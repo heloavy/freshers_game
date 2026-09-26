@@ -396,6 +396,10 @@ class SupabaseService {
     return updatedEntry;
   }
 
+  public getLeaderboardSnapshot(): TeamLeaderboardEntry[] {
+    return [...this.localLeaderboard];
+  }
+
   // Admin bulk operations: add new team, delete team, reset team, reset all
   public async addCustomTeam(teamId: string, teamName: string, avatar: string = '🚀'): Promise<TeamLeaderboardEntry> {
     const newEntry: TeamLeaderboardEntry = {
@@ -419,7 +423,10 @@ class SupabaseService {
     if (this.client) {
       try {
         await this.client.from('leaderboard').delete().eq('team_id', teamId);
-      } catch {}
+        await this.fetchLeaderboard();
+      } catch (err) {
+        console.warn('Failed to delete team in Supabase:', err);
+      }
     }
   }
 
@@ -531,14 +538,16 @@ class SupabaseService {
           { event: '*', schema: 'public', table: 'leaderboard' },
           (payload) => {
             if (payload.eventType === 'DELETE') {
-              const oldId = (payload.old as { team_id?: string })?.team_id;
-              if (oldId) {
-                this.localLeaderboard = this.localLeaderboard.filter((t) => t.team_id !== oldId);
+              const old = payload.old as Record<string, unknown> | undefined;
+              const deletedId = (old?.team_id || old?.id) as string | undefined;
+              if (deletedId) {
+                this.localLeaderboard = this.localLeaderboard.filter(
+                  (t) => t.team_id !== deletedId && (t as unknown as Record<string, unknown>).id !== deletedId
+                );
                 this.saveLocalLeaderboard();
-              } else {
-                // Bulk delete or truncate without specific id: re-fetch from Supabase
-                this.fetchLeaderboard();
               }
+              // Immediately fetch fresh state from DB to guarantee instant sync
+              this.fetchLeaderboard();
             } else if (payload.new && (payload.new as TeamLeaderboardEntry).team_id) {
               const newEntry = payload.new as TeamLeaderboardEntry;
               // Only include if registered with a valid team name

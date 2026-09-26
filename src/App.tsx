@@ -210,31 +210,90 @@ export default function App() {
     }
   }, []);
 
-  // Subscribe to real-time leaderboard changes
+  // Synchronize incoming leaderboard data from Supabase across all active client views
+  const handleLeaderboardSync = (data: TeamLeaderboardEntry[]) => {
+    setLeaderboard(data);
+
+    // 1. If this device has an active or completed game session:
+    setGameState((prev) => {
+      if (prev.isStarted) {
+        // If the game has been running for at least 4 seconds or is completed,
+        // and its team record no longer exists in the database snapshot:
+        const teamStillInDb = data.some((t) => t.team_id.toUpperCase() === prev.teamId.toUpperCase());
+        if ((prev.elapsedTime > 3 || prev.isCompleted) && !teamStillInDb) {
+          // Team was deleted in Supabase! Immediately purge local locks & state
+          try {
+            localStorage.removeItem('dtth_active_game');
+            localStorage.removeItem('dtth_completed_state');
+            localStorage.removeItem('dtth_terminal_locked');
+            localStorage.removeItem('dtth_completed_team');
+          } catch {}
+
+          setScoreToast({
+            title: '⚠️ ENTRY REMOVED FROM DATABASE (RESET)',
+            points: 0,
+          });
+          setTimeout(() => setScoreToast(null), 4500);
+
+          return {
+            teamId: 'TEAM_01',
+            teamName: '',
+            avatar: '🚀',
+            isStarted: false,
+            isCompleted: false,
+            currentLevel: 1,
+            elapsedTime: 0,
+            penalties: 0,
+            score: 0,
+            levelStartTime: Date.now(),
+            unlockedKeys: [],
+            isKeyDecoded: false,
+          };
+        }
+      }
+      return prev;
+    });
+
+    // 2. If the terminal was locked from a completed run, check if that team was purged from DB
+    try {
+      const completedTeam = localStorage.getItem('dtth_completed_team');
+      if (completedTeam) {
+        const stillExists = data.some(
+          (t) => t.team_name && t.team_name.trim().toLowerCase() === completedTeam.trim().toLowerCase()
+        );
+        if (!stillExists) {
+          localStorage.removeItem('dtth_terminal_locked');
+          localStorage.removeItem('dtth_completed_team');
+          localStorage.removeItem('dtth_completed_state');
+          localStorage.removeItem('dtth_active_game');
+        }
+      }
+    } catch {}
+  };
+
+  // Subscribe to real-time leaderboard changes & fallback polling every 3.5 seconds
+  // This guarantees ANY deletion directly in the Supabase Table Editor or SQL reflects instantly on the frontend!
   useEffect(() => {
     const unsubscribe = supabaseService.subscribeToLeaderboard((data) => {
-      setLeaderboard(data);
+      handleLeaderboardSync(data);
     });
 
     supabaseService.fetchLeaderboard().then((data) => {
-      setLeaderboard(data);
+      handleLeaderboardSync(data);
     });
+
+    // Rapid 3.5s background poll across the entire app (home screen, playing screen, admin modal)
+    const pollInterval = setInterval(() => {
+      supabaseService.fetchLeaderboard().then((data) => {
+        handleLeaderboardSync(data);
+      });
+    }, 3500);
 
     return () => {
       unsubscribe();
+      clearInterval(pollInterval);
     };
   }, []);
-
-  // Resilient fallback poll when leaderboard is viewed (safeguards against strict lab firewalls dropping WebSockets)
-  useEffect(() => {
-    if (!isLeaderboardOpen) return;
-    const interval = setInterval(() => {
-      supabaseService.fetchLeaderboard().then((data) => {
-        setLeaderboard(data);
-      });
-    }, 10000);
-    return () => clearInterval(interval);
-  }, [isLeaderboardOpen]);
 
   // Main game elapsed timer
   useEffect(() => {
@@ -245,15 +304,20 @@ export default function App() {
 
           // Sync to Supabase periodically (every 15 seconds to prevent rate-limiting 50 concurrent teams)
           if (nextTime % 15 === 0) {
-            supabaseService.upsertLeaderboard({
-              team_id: prev.teamId,
-              team_name: prev.teamName,
-              avatar: prev.avatar,
-              current_level: prev.currentLevel,
-              score: prev.score,
-              elapsed_time: nextTime,
-              penalties: prev.penalties,
-            });
+            // Anti-Zombie Protection: Verify team has not been deleted before upserting
+            const snapshot = supabaseService.getLeaderboardSnapshot();
+            const isStillActive = snapshot.some((t) => t.team_id.toUpperCase() === prev.teamId.toUpperCase());
+            if (isStillActive || nextTime <= 15) {
+              supabaseService.upsertLeaderboard({
+                team_id: prev.teamId,
+                team_name: prev.teamName,
+                avatar: prev.avatar,
+                current_level: prev.currentLevel,
+                score: prev.score,
+                elapsed_time: nextTime,
+                penalties: prev.penalties,
+              });
+            }
           }
 
           return {
