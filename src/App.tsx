@@ -17,10 +17,15 @@ import { PenaltySkipModal } from './components/PenaltySkipModal';
 import { SupabaseSettingsModal } from './components/SupabaseSettingsModal';
 import { AdminControlModal } from './components/AdminControlModal';
 import { ShareAccessModal } from './components/ShareAccessModal';
+import { TreasureKeyModal } from './components/TreasureKeyModal';
+import { KeyUnlockedCelebrationModal } from './components/KeyUnlockedCelebrationModal';
+import { TreasureDecoderModal } from './components/TreasureDecoderModal';
+import { getKeyByLevel, TreasureKey } from './services/treasureKeys';
+import { GameState, GameLevelId, TeamLeaderboardEntry, AdminMember } from './types';
 
 import { supabaseService, DEFAULT_SUPABASE_URL, DEFAULT_SUPABASE_ANON_KEY } from './services/supabaseService';
 import { sounds } from './services/soundEffects';
-import { Trophy, Clock, ShieldAlert, Sparkles, Volume2, VolumeX, Database, Orbit, ShieldCheck, QrCode, AlertTriangle } from 'lucide-react';
+import { Trophy, Clock, ShieldAlert, Sparkles, Volume2, VolumeX, Database, Orbit, ShieldCheck, QrCode, AlertTriangle, Key } from 'lucide-react';
 
 // ============================================================================
 // SUPABASE CREDENTIALS CONFIGURATION:
@@ -61,6 +66,8 @@ export default function App() {
       penalties: 0,
       score: 0,
       levelStartTime: Date.now(),
+      unlockedKeys: [],
+      isKeyDecoded: false,
     };
   });
 
@@ -70,6 +77,9 @@ export default function App() {
   const [isSupabaseModalOpen, setIsSupabaseModalOpen] = useState<boolean>(false);
   const [isAdminModalOpen, setIsAdminModalOpen] = useState<boolean>(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState<boolean>(false);
+  const [isKeyModalOpen, setIsKeyModalOpen] = useState<boolean>(false);
+  const [isDecoderModalOpen, setIsDecoderModalOpen] = useState<boolean>(false);
+  const [newlyUnlockedKey, setNewlyUnlockedKey] = useState<TreasureKey | null>(null);
   const [skipModalOpen, setSkipModalOpen] = useState<boolean>(false);
   const [isMuted, setIsMuted] = useState<boolean>(sounds.isMuted());
   const [isSupabaseConnected, setIsSupabaseConnected] = useState<boolean>(supabaseService.isConnected());
@@ -275,6 +285,8 @@ export default function App() {
       penalties: 0,
       score: 0,
       levelStartTime: Date.now(),
+      unlockedKeys: [],
+      isKeyDecoded: false,
     };
 
     setGameState(initialState);
@@ -298,22 +310,36 @@ export default function App() {
       const duration = levelDurationSec ?? Math.max(1, Math.floor((Date.now() - prev.levelStartTime) / 1000));
       const pointsEarned = 1000 + Math.max(100, 1000 - duration * 15);
       const nextScore = prev.score + pointsEarned;
+      const clearedLevel = prev.currentLevel;
       const nextLevelNum = prev.currentLevel + 1;
       const isFinished = nextLevelNum > 5;
+      const nextKeys = Array.from(new Set([...(prev.unlockedKeys || []), clearedLevel]));
+
+      // Award Treasure Key for clearing sector
+      const earnedKey = getKeyByLevel(clearedLevel);
+      if (earnedKey) {
+        setNewlyUnlockedKey(earnedKey);
+      }
+
+      // If all 5 games are finished, launch master decoder terminal!
+      if (isFinished) {
+        setIsDecoderModalOpen(true);
+      }
 
       // Trigger visual celebratory score toast
       setScoreToast({
-        title: `SECTOR 0${prev.currentLevel} CLEARED!`,
+        title: `SECTOR 0${clearedLevel} CLEARED!`,
         points: pointsEarned,
       });
       setTimeout(() => setScoreToast(null), 3500);
 
-      const updated = {
+      const updated: GameState = {
         ...prev,
         score: nextScore,
         currentLevel: (isFinished ? 5 : nextLevelNum) as GameLevelId,
         isCompleted: isFinished,
         levelStartTime: Date.now(),
+        unlockedKeys: nextKeys,
       };
 
       // Push real-time record to Supabase (current_level: 6 represents completed all 5 levels)
@@ -338,22 +364,35 @@ export default function App() {
     setGameState((prev) => {
       const nextPenalties = prev.penalties + 90;
       const nextScore = prev.score; // 0 points for skip
+      const skippedLevel = prev.currentLevel;
       const nextLevelNum = prev.currentLevel + 1;
       const isFinished = nextLevelNum > 5;
+      const nextKeys = Array.from(new Set([...(prev.unlockedKeys || []), skippedLevel]));
+
+      // Award Emergency Bypass Key so team can still decode
+      const earnedKey = getKeyByLevel(skippedLevel);
+      if (earnedKey) {
+        setNewlyUnlockedKey(earnedKey);
+      }
+
+      if (isFinished) {
+        setIsDecoderModalOpen(true);
+      }
 
       setScoreToast({
-        title: `SECTOR 0${prev.currentLevel} SKIPPED (+90s PENALTY)`,
+        title: `SECTOR 0${skippedLevel} SKIPPED (+90s PENALTY)`,
         points: 0,
       });
       setTimeout(() => setScoreToast(null), 3000);
 
-      const updated = {
+      const updated: GameState = {
         ...prev,
         penalties: nextPenalties,
         score: nextScore,
         currentLevel: (isFinished ? 5 : nextLevelNum) as GameLevelId,
         isCompleted: isFinished,
         levelStartTime: Date.now(),
+        unlockedKeys: nextKeys,
       };
 
       // Push to Supabase with penalty updated (current_level: 6 if finished)
@@ -510,8 +549,36 @@ export default function App() {
             </div>
           </div>
 
-          {/* Right: Sound, Supabase, Admin Panel, and Floating Trophy Leaderboard Button */}
+          {/* Right: Keychain, Sound, and Floating Trophy Leaderboard Button */}
           <div className="flex items-center gap-2">
+            {/* Treasure Keys Keychain HUD */}
+            <button
+              onClick={() => {
+                sounds.playClick();
+                setIsKeyModalOpen(true);
+              }}
+              className="flex items-center gap-1.5 bg-slate-900/90 hover:bg-slate-800 px-3 py-1.5 rounded-xl border border-amber-500/50 text-xs font-mono text-amber-300 transition-all cursor-pointer shadow-[0_0_15px_rgba(245,158,11,0.25)]"
+              title="Inspect collected Treasure Keys"
+            >
+              <Key className="w-3.5 h-3.5 text-amber-400" />
+              <span className="font-bold text-white hidden sm:inline">KEYS:</span>
+              <span className="font-bold text-amber-400 font-display">
+                {(gameState.unlockedKeys || []).length}/5
+              </span>
+              <div className="flex gap-1 ml-0.5">
+                {[1, 2, 3, 4, 5].map((lvl) => (
+                  <span
+                    key={lvl}
+                    className={`w-2 h-2 rounded-full transition-all ${
+                      (gameState.unlockedKeys || []).includes(lvl)
+                        ? 'bg-amber-400 shadow-[0_0_8px_rgba(245,158,11,1)]'
+                        : 'bg-slate-800 border border-slate-700'
+                    }`}
+                  />
+                ))}
+              </div>
+            </button>
+
             {/* Audio Toggle */}
             <button
               onClick={toggleSound}
@@ -588,6 +655,7 @@ export default function App() {
             rank={currentTeamRank}
             onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
             onRestart={handleRestart}
+            onOpenDecoder={() => setIsDecoderModalOpen(true)}
           />
         ) : (
           <div className="w-full flex flex-col items-center">
@@ -672,6 +740,35 @@ export default function App() {
         onClose={() => setIsSupabaseModalOpen(false)}
         onConfigUpdated={() => {
           setIsSupabaseConnected(supabaseService.isConnected());
+        }}
+      />
+
+      {/* Treasure Hunt Modals */}
+      <KeyUnlockedCelebrationModal
+        isOpen={!!newlyUnlockedKey}
+        treasureKey={newlyUnlockedKey}
+        totalKeysUnlocked={(gameState.unlockedKeys || []).length}
+        onProceed={() => setNewlyUnlockedKey(null)}
+      />
+
+      <TreasureKeyModal
+        isOpen={isKeyModalOpen}
+        onClose={() => setIsKeyModalOpen(false)}
+        unlockedLevels={gameState.unlockedKeys || []}
+        onOpenDecoder={() => {
+          setIsKeyModalOpen(false);
+          setIsDecoderModalOpen(true);
+        }}
+      />
+
+      <TreasureDecoderModal
+        isOpen={isDecoderModalOpen}
+        onClose={() => setIsDecoderModalOpen(false)}
+        onCompleteDecoding={() => {
+          setGameState((prev) => ({
+            ...prev,
+            isKeyDecoded: true,
+          }));
         }}
       />
     </div>

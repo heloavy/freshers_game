@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { sounds } from '../../services/soundEffects';
-import { Code2, Sparkles, CheckCircle2, RotateCcw, AlertCircle, HelpCircle, Search, Terminal, Cpu } from 'lucide-react';
+import { Sparkles, CheckCircle2, AlertCircle, HelpCircle, Terminal, Radio } from 'lucide-react';
 
 interface Props {
   onComplete: (levelDurationSec: number) => void;
@@ -20,9 +20,11 @@ export interface WordPlacement {
   dc: number;
   len: number;
   color: string;
+  dirLabel: string;
+  dirIcon: string;
 }
 
-// 17 C, Python & Compiler words perfectly placed in the 13x13 matrix
+// 17 C, Python & Compiler words perfectly placed in the 13x13 matrix with direction metadata
 export const CODING_WORDS: WordPlacement[] = [
   {
     word: 'POINTER',
@@ -35,7 +37,9 @@ export const CODING_WORDS: WordPlacement[] = [
     dr: -1,
     dc: 0,
     len: 7,
-    color: '#ec4899', // Pink (like image 2)
+    color: '#ec4899', // Pink
+    dirLabel: 'Vertical Up',
+    dirIcon: '⬆️',
   },
   {
     word: 'MALLOC',
@@ -49,6 +53,8 @@ export const CODING_WORDS: WordPlacement[] = [
     dc: -1,
     len: 6,
     color: '#84cc16', // Lime green
+    dirLabel: 'Diag Down-Left',
+    dirIcon: '↙️',
   },
   {
     word: 'STRUCT',
@@ -62,6 +68,8 @@ export const CODING_WORDS: WordPlacement[] = [
     dc: 1,
     len: 6,
     color: '#a855f7', // Purple
+    dirLabel: 'Diag Up-Right',
+    dirIcon: '↗️',
   },
   {
     word: 'SIZEOF',
@@ -75,6 +83,8 @@ export const CODING_WORDS: WordPlacement[] = [
     dc: 1,
     len: 6,
     color: '#06b6d4', // Cyan
+    dirLabel: 'Diag Down-Right',
+    dirIcon: '↘️',
   },
   {
     word: 'BUFFER',
@@ -88,6 +98,8 @@ export const CODING_WORDS: WordPlacement[] = [
     dc: 1,
     len: 6,
     color: '#f59e0b', // Amber
+    dirLabel: 'Horizontal (L to R)',
+    dirIcon: '➡️',
   },
   {
     word: 'HEADER',
@@ -101,6 +113,8 @@ export const CODING_WORDS: WordPlacement[] = [
     dc: 1,
     len: 6,
     color: '#38bdf8', // Sky blue
+    dirLabel: 'Diag Down-Right',
+    dirIcon: '↘️',
   },
   {
     word: 'LAMBDA',
@@ -114,6 +128,8 @@ export const CODING_WORDS: WordPlacement[] = [
     dc: 1,
     len: 6,
     color: '#10b981', // Emerald
+    dirLabel: 'Diag Up-Right',
+    dirIcon: '↗️',
   },
   {
     word: 'YIELD',
@@ -127,6 +143,8 @@ export const CODING_WORDS: WordPlacement[] = [
     dc: 1,
     len: 5,
     color: '#f43f5e', // Rose
+    dirLabel: 'Diag Up-Right',
+    dirIcon: '↗️',
   },
   {
     word: 'IMPORT',
@@ -140,6 +158,8 @@ export const CODING_WORDS: WordPlacement[] = [
     dc: 1,
     len: 6,
     color: '#6366f1', // Indigo
+    dirLabel: 'Diag Up-Right',
+    dirIcon: '↗️',
   },
   {
     word: 'GLOBAL',
@@ -153,6 +173,8 @@ export const CODING_WORDS: WordPlacement[] = [
     dc: 1,
     len: 6,
     color: '#eab308', // Yellow
+    dirLabel: 'Horizontal (L to R)',
+    dirIcon: '➡️',
   },
   {
     word: 'RETURN',
@@ -166,6 +188,8 @@ export const CODING_WORDS: WordPlacement[] = [
     dc: 1,
     len: 6,
     color: '#14b8a6', // Teal
+    dirLabel: 'Diag Up-Right',
+    dirIcon: '↗️',
   },
   {
     word: 'ASSERT',
@@ -179,6 +203,8 @@ export const CODING_WORDS: WordPlacement[] = [
     dc: -1,
     len: 6,
     color: '#f97316', // Orange
+    dirLabel: 'Diag Down-Left',
+    dirIcon: '↙️',
   },
   {
     word: 'PARSER',
@@ -192,6 +218,8 @@ export const CODING_WORDS: WordPlacement[] = [
     dc: 0,
     len: 6,
     color: '#d946ef', // Fuchsia
+    dirLabel: 'Vertical Down',
+    dirIcon: '⬇️',
   },
   {
     word: 'LINKER',
@@ -205,6 +233,8 @@ export const CODING_WORDS: WordPlacement[] = [
     dc: -1,
     len: 6,
     color: '#8b5cf6', // Violet
+    dirLabel: 'Diag Up-Left',
+    dirIcon: '↖️',
   },
   {
     word: 'SYNTAX',
@@ -218,6 +248,8 @@ export const CODING_WORDS: WordPlacement[] = [
     dc: 0,
     len: 6,
     color: '#0ea5e9', // Light blue
+    dirLabel: 'Vertical Down',
+    dirIcon: '⬇️',
   },
   {
     word: 'BINARY',
@@ -231,6 +263,8 @@ export const CODING_WORDS: WordPlacement[] = [
     dc: -1,
     len: 6,
     color: '#4ade80', // Mint green
+    dirLabel: 'Horizontal (R to L)',
+    dirIcon: '⬅️',
   },
   {
     word: 'TOKENS',
@@ -244,6 +278,8 @@ export const CODING_WORDS: WordPlacement[] = [
     dc: -1,
     len: 6,
     color: '#fbbf24', // Gold
+    dirLabel: 'Horizontal (R to L)',
+    dirIcon: '⬅️',
   },
 ];
 
@@ -264,22 +300,25 @@ export const MATRIX_GRID: string[][] = [
   ['X', 'U', 'S', 'N', 'E', 'K', 'O', 'T', 'R', 'D', 'L', 'Y', 'Y'],
 ];
 
-const REQUIRED_WORDS_COUNT = 10; // Minimum 10 words required to complete station
+// Tuned from 10 to 5 for an accessible, engaging mid-hard treasure hunt balance
+const REQUIRED_WORDS_COUNT = 5;
 
 interface CellCoord {
   row: number;
   col: number;
 }
 
-export const Level3CodeWordSearch: React.FC<Props> = ({ onComplete, onApplyPenalty, onSkipRequest }) => {
+export const Level3CodeWordSearch: React.FC<Props> = ({ onComplete, onApplyPenalty }) => {
   const [foundWords, setFoundWords] = useState<string[]>([]);
   const [selectedStart, setSelectedStart] = useState<CellCoord | null>(null);
   const [selectedEnd, setSelectedEnd] = useState<CellCoord | null>(null);
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [categoryFilter, setCategoryFilter] = useState<'ALL' | 'C Language' | 'Python' | 'Compiler'>('ALL');
-  const [statusMessage, setStatusMessage] = useState<string>('Drag or tap start & end letters to circle coding words');
+  const [statusMessage, setStatusMessage] = useState<string>(
+    'Find 5 keywords to clear Sector 03. Tap any word on the right for a radar beacon!'
+  );
   const [isVictorious, setIsVictorious] = useState<boolean>(false);
-  const [hintWord, setHintWord] = useState<WordPlacement | null>(null);
+  const [radarWord, setRadarWord] = useState<WordPlacement | null>(null);
   const [showHintConfirm, setShowHintConfirm] = useState<boolean>(false);
 
   // Speed scoring timer
@@ -356,7 +395,12 @@ export const Level3CodeWordSearch: React.FC<Props> = ({ onComplete, onApplyPenal
         const nextFound = [...foundWords, matchedWord.word];
         setFoundWords(nextFound);
         sounds.playCapture();
-        setStatusMessage(`FOUND [${matchedWord.cat}]: "${matchedWord.word}" — ${matchedWord.clue}!`);
+        setStatusMessage(`FOUND [${matchedWord.cat}]: "${matchedWord.word}" (${matchedWord.dirIcon} ${matchedWord.dirLabel}) — ${matchedWord.clue}!`);
+
+        // If radar was pinging this word, clear it
+        if (radarWord?.word === matchedWord.word) {
+          setRadarWord(null);
+        }
 
         if (nextFound.length >= REQUIRED_WORDS_COUNT && !isVictorious) {
           setIsVictorious(true);
@@ -365,7 +409,7 @@ export const Level3CodeWordSearch: React.FC<Props> = ({ onComplete, onApplyPenal
       }
     } else {
       sounds.playBuzzer();
-      setStatusMessage(`"${str}" is not in the coding word bank. Try another!`);
+      setStatusMessage(`"${str}" is not in the coding word bank. Try another line!`);
     }
 
     setSelectedStart(null);
@@ -378,7 +422,7 @@ export const Level3CodeWordSearch: React.FC<Props> = ({ onComplete, onApplyPenal
       sounds.playClick();
       setSelectedStart({ row, col });
       setSelectedEnd({ row, col });
-      setStatusMessage(`Selected '${MATRIX_GRID[row][col]}'. Now tap the last letter of the word!`);
+      setStatusMessage(`Selected '${MATRIX_GRID[row][col]}'. Now drag or tap the last letter of the word!`);
     } else {
       // Second tap: evaluate line
       checkSelection(selectedStart, { row, col });
@@ -404,7 +448,7 @@ export const Level3CodeWordSearch: React.FC<Props> = ({ onComplete, onApplyPenal
     }
   };
 
-  // Touch move support for phone screens
+  // Touch move support for touchscreens and mobile
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!isDragging || !gridContainerRef.current) return;
     const touch = e.touches[0];
@@ -423,17 +467,26 @@ export const Level3CodeWordSearch: React.FC<Props> = ({ onComplete, onApplyPenal
     }
   };
 
-  // Hint button: reveals first letter and direction of an undiscovered word with -200 PTS penalty
+  // Radar ping: clicking an un-found word in the sidebar pings its starting cell
+  const handleRadarPing = (item: WordPlacement) => {
+    sounds.playClick();
+    setRadarWord(item);
+    setStatusMessage(
+      `📡 Radar Beacon pinged '${MATRIX_GRID[item.startRow][item.startCol]}' for "${item.word}" at Row ${item.startRow + 1}, Col ${item.startCol + 1} (${item.dirIcon} ${item.dirLabel})!`
+    );
+  };
+
+  // Affordable Hint button (-50 PTS, +10s)
   const handleConfirmHint = () => {
     setShowHintConfirm(false);
     sounds.playClick();
-    onApplyPenalty?.(200, 30, 'Level 3 Keyword Hint');
+    onApplyPenalty?.(50, 10, 'Level 3 Keyword Hint');
 
     const remaining = CODING_WORDS.filter((w) => !foundWords.includes(w.word));
     if (remaining.length === 0) return;
     const pick = remaining[Math.floor(Math.random() * remaining.length)];
-    setHintWord(pick);
-    setStatusMessage(`💡 HINT (-200 PTS, +30s): Look for "${pick.word}" (${pick.cat}) starting at Row ${pick.startRow + 1}, Col ${pick.startCol + 1}!`);
+    setRadarWord(pick);
+    setStatusMessage(`💡 HINT (-50 PTS, +10s): "${pick.word}" (${pick.cat}) starts at Row ${pick.startRow + 1}, Col ${pick.startCol + 1} (${pick.dirIcon} ${pick.dirLabel})!`);
   };
 
   // Current active line cells for preview highlight
@@ -462,13 +515,13 @@ export const Level3CodeWordSearch: React.FC<Props> = ({ onComplete, onApplyPenal
         <div>
           <div className="flex items-center gap-2 text-amber-400 font-mono text-xs uppercase tracking-widest mb-1">
             <Terminal className="w-4 h-4 text-amber-400" />
-            <span>Mission Level 03 // C, Python &amp; Compiler Matrix</span>
+            <span>Mission Level 03 // C, Python &amp; Compiler Matrix (Mid-Hard Difficulty)</span>
           </div>
           <h2 className="text-xl md:text-2xl font-bold font-display text-white tracking-wide">
             Compiler &amp; Syntax Word Search
           </h2>
           <p className="text-xs md:text-sm text-slate-300 mt-1 max-w-xl">
-            Locate hidden programming keywords across C, Python, and Compilers. Find <span className="text-amber-400 font-bold">minimum 10 words</span> to decrypt Sector 04!
+            Locate hidden programming keywords across C, Python, and Compilers. Find <span className="text-amber-400 font-bold">minimum 5 words</span> to decrypt Sector 04! Click any word on the right for its radar beacon.
           </p>
         </div>
 
@@ -498,10 +551,10 @@ export const Level3CodeWordSearch: React.FC<Props> = ({ onComplete, onApplyPenal
           <button
             onClick={() => setShowHintConfirm(true)}
             className="px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/50 text-amber-300 text-xs font-mono font-bold flex items-center gap-1.5 cursor-pointer transition-all"
-            title="Get a hint for an undiscovered keyword (-200 PTS, +30s)"
+            title="Get a hint for an undiscovered keyword (-50 PTS, +10s)"
           >
             <HelpCircle className="w-3.5 h-3.5 text-amber-400" />
-            <span>Hint (-200 PTS)</span>
+            <span>Hint (-50 PTS)</span>
           </button>
         </div>
       </div>
@@ -515,7 +568,7 @@ export const Level3CodeWordSearch: React.FC<Props> = ({ onComplete, onApplyPenal
             onTouchMove={handleTouchMove}
             className="relative p-3 sm:p-4 rounded-3xl glass-panel-purple border-2 border-amber-500/40 shadow-[0_0_40px_rgba(245,158,11,0.2)] select-none touch-none"
           >
-            {/* SVG Pill Capsule Overlays (rendered directly on top of letter cells like Image 2) */}
+            {/* SVG Pill Capsule Overlays */}
             <svg
               className="absolute inset-0 w-full h-full pointer-events-none z-10"
               style={{ padding: '12px' }}
@@ -572,6 +625,11 @@ export const Level3CodeWordSearch: React.FC<Props> = ({ onComplete, onApplyPenal
                   const isInLine = isCellInCurrentLine(r, c);
                   const isStart = selectedStart?.row === r && selectedStart?.col === c;
                   const isEnd = selectedEnd?.row === r && selectedEnd?.col === c;
+                  const isRadarStart =
+                    radarWord &&
+                    !foundWords.includes(radarWord.word) &&
+                    radarWord.startRow === r &&
+                    radarWord.startCol === c;
 
                   return (
                     <div
@@ -584,6 +642,8 @@ export const Level3CodeWordSearch: React.FC<Props> = ({ onComplete, onApplyPenal
                       className={`w-7 h-7 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-lg flex items-center justify-center font-mono font-bold text-xs sm:text-base md:text-lg cursor-pointer transition-all duration-150 select-none ${
                         isStart || isEnd
                           ? 'bg-amber-400 text-slate-950 font-black scale-110 shadow-[0_0_15px_rgba(245,158,11,0.9)] z-30'
+                          : isRadarStart
+                          ? 'bg-amber-400 text-slate-950 font-black scale-110 ring-4 ring-amber-300 animate-pulse shadow-[0_0_25px_rgba(245,158,11,1)] z-30'
                           : isInLine
                           ? 'bg-sky-400/40 text-white border border-sky-300 z-20 scale-105'
                           : 'bg-slate-900/60 hover:bg-slate-800/80 text-slate-200 border border-slate-800/80 hover:border-amber-400/50'
@@ -643,7 +703,7 @@ export const Level3CodeWordSearch: React.FC<Props> = ({ onComplete, onApplyPenal
               <Sparkles className="w-4 h-4 text-amber-400" />
               <div className="text-xs font-mono font-bold text-white">
                 {foundWords.length >= REQUIRED_WORDS_COUNT ? (
-                  <span className="text-emerald-400">Sector Goal Achieved ({foundWords.length}/10)!</span>
+                  <span className="text-emerald-400">Sector Goal Achieved ({foundWords.length}/{REQUIRED_WORDS_COUNT})!</span>
                 ) : (
                   <span>Find {remainingToGoal} more words to unlock Level 04</span>
                 )}
@@ -654,21 +714,26 @@ export const Level3CodeWordSearch: React.FC<Props> = ({ onComplete, onApplyPenal
             </span>
           </div>
 
-          {/* Word List Cards with definitions */}
+          {/* Word List Cards with definitions, direction clues, and radar beacon pings */}
           <div className="max-h-[380px] overflow-y-auto space-y-2 pr-1 custom-scrollbar">
             {displayedWords.map((item) => {
               const isFound = foundWords.includes(item.word);
+              const isPinging = radarWord?.word === item.word && !isFound;
               return (
                 <div
                   key={item.word}
-                  className={`p-2.5 rounded-xl border transition-all flex items-start justify-between gap-2 ${
+                  onClick={() => !isFound && handleRadarPing(item)}
+                  className={`p-2.5 rounded-xl border transition-all flex items-start justify-between gap-2 cursor-pointer ${
                     isFound
                       ? 'bg-emerald-950/30 border-emerald-500/50 shadow-[0_0_10px_rgba(16,185,129,0.2)]'
-                      : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
+                      : isPinging
+                      ? 'bg-amber-950/50 border-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.4)] ring-1 ring-amber-400'
+                      : 'bg-slate-900/60 border-slate-800 hover:border-slate-700 hover:bg-slate-800/50'
                   }`}
+                  title={!isFound ? 'Click to ping radar on start letter in matrix!' : 'Already discovered'}
                 >
                   <div className="flex-1">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span
                         className={`font-mono font-bold text-sm tracking-wide ${
                           isFound ? 'line-through text-slate-400' : 'text-white'
@@ -686,8 +751,18 @@ export const Level3CodeWordSearch: React.FC<Props> = ({ onComplete, onApplyPenal
                       >
                         {item.cat}
                       </span>
+                      <span className="px-1.5 py-0.2 rounded bg-slate-800 border border-slate-700 text-[10px] font-mono text-cyan-300 font-bold flex items-center gap-1">
+                        <span>{item.dirIcon}</span>
+                        <span>{item.dirLabel}</span>
+                      </span>
                     </div>
-                    <p className="text-[11px] text-slate-400 mt-0.5 font-mono">{item.clue}</p>
+                    <p className="text-[11px] text-slate-400 mt-1 font-mono">{item.clue}</p>
+                    {!isFound && (
+                      <div className="flex items-center gap-1 text-[10px] font-mono text-amber-400/80 mt-1">
+                        <Radio className="w-3 h-3 text-amber-400 animate-pulse" />
+                        <span>Tap to ping radar beacon &bull; Starts at Row {item.startRow + 1}</span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex items-center flex-shrink-0 pt-0.5">
@@ -697,7 +772,7 @@ export const Level3CodeWordSearch: React.FC<Props> = ({ onComplete, onApplyPenal
                         <span>FOUND</span>
                       </span>
                     ) : (
-                      <span className="text-[11px] font-mono text-slate-600">
+                      <span className="text-[11px] font-mono text-slate-500">
                         {item.len} letters
                       </span>
                     )}
@@ -707,7 +782,7 @@ export const Level3CodeWordSearch: React.FC<Props> = ({ onComplete, onApplyPenal
             })}
           </div>
 
-          {/* Victory Advance Banner once 10 words are reached */}
+          {/* Victory Advance Banner once 5 words are reached */}
           {foundWords.length >= REQUIRED_WORDS_COUNT && (
             <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-950/80 via-teal-950/80 to-slate-900 border-2 border-emerald-400 shadow-[0_0_30px_rgba(16,185,129,0.4)] animate-fade-in flex flex-col items-center text-center gap-3">
               <div className="flex items-center gap-2 text-emerald-400 font-display font-bold text-base">
@@ -715,7 +790,7 @@ export const Level3CodeWordSearch: React.FC<Props> = ({ onComplete, onApplyPenal
                 <span>SECTOR 03 CLEARED! ({foundWords.length} Words Found)</span>
               </div>
               <p className="text-xs font-mono text-slate-300">
-                You surpassed the 10-word threshold. Ready to smash glitches in Sector 04?
+                You reached the 5-word clearance threshold. Ready to smash glitches in Sector 04?
               </p>
               <button
                 onClick={() => {
@@ -731,7 +806,7 @@ export const Level3CodeWordSearch: React.FC<Props> = ({ onComplete, onApplyPenal
         </div>
       </div>
 
-      {/* Confirmation Modal for Hint (-200 PTS) */}
+      {/* Confirmation Modal for Hint (-50 PTS) */}
       {showHintConfirm && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="w-full max-w-md p-6 rounded-2xl glass-panel-purple border-2 border-amber-500/60 shadow-[0_0_35px_rgba(245,158,11,0.4)] flex flex-col gap-4 animate-scale-up">
@@ -744,13 +819,13 @@ export const Level3CodeWordSearch: React.FC<Props> = ({ onComplete, onApplyPenal
                   Request Keyword Search Hint?
                 </h3>
                 <span className="text-xs font-mono text-amber-400 font-bold">
-                  Penalty: -200 Points &amp; +30s Time Penalty
+                  Penalty: -50 Points &amp; +10s Time Penalty
                 </span>
               </div>
             </div>
 
             <p className="text-xs text-slate-300 font-mono leading-relaxed">
-              Revealing an undiscovered keyword starting cell and direction will deduct <span className="text-amber-300 font-bold">200 PTS</span> from your squad score and add <span className="text-rose-400 font-bold">+30 seconds</span> to your penalty time.
+              Revealing an undiscovered keyword starting cell and direction will deduct <span className="text-amber-300 font-bold">50 PTS</span> from your squad score and add <span className="text-rose-400 font-bold">+10 seconds</span> to your penalty time.
             </p>
 
             <div className="flex items-center justify-end gap-3 mt-2">
@@ -764,7 +839,7 @@ export const Level3CodeWordSearch: React.FC<Props> = ({ onComplete, onApplyPenal
                 onClick={handleConfirmHint}
                 className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-display font-extrabold text-xs uppercase tracking-wider shadow-[0_0_15px_rgba(245,158,11,0.5)] cursor-pointer transition-all"
               >
-                Confirm Hint (-200 PTS)
+                Confirm Hint (-50 PTS)
               </button>
             </div>
           </div>
@@ -775,7 +850,7 @@ export const Level3CodeWordSearch: React.FC<Props> = ({ onComplete, onApplyPenal
       <div className="w-full mt-6 flex items-center justify-between">
         <div className="flex items-center gap-2 text-xs font-mono text-slate-400">
           <AlertCircle className="w-4 h-4 text-amber-400" />
-          <span>Requirement: Find at least 10 C, Python &amp; Compiler keywords across the 13x13 matrix.</span>
+          <span>Requirement: Find at least 5 C, Python &amp; Compiler keywords across the 13x13 matrix. Tap any word to ping start radar!</span>
         </div>
       </div>
     </div>

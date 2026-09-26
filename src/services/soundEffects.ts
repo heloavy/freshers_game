@@ -241,6 +241,60 @@ class SoundManager {
       osc.stop(now + 0.32);
     } catch {}
   }
+
+  // Futuristic Treasure Key Unlocked chime
+  public playKeyUnlock() {
+    if (this.muted) return;
+    this.initCtx();
+    if (!this.ctx) return;
+
+    try {
+      const now = this.ctx.currentTime;
+      const freqs = [659.25, 830.61, 987.77, 1318.51, 1661.22]; // E5, G#5, B5, E6, G#6 shimmering chime
+      freqs.forEach((freq, idx) => {
+        const osc = this.ctx!.createOscillator();
+        const gain = this.ctx!.createGain();
+
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, now + idx * 0.05);
+
+        gain.gain.setValueAtTime(0.18, now + idx * 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.05 + 0.4);
+
+        osc.connect(gain);
+        gain.connect(this.ctx!.destination);
+
+        osc.start(now + idx * 0.05);
+        osc.stop(now + idx * 0.05 + 0.42);
+      });
+    } catch {}
+  }
+
+  // Cyber Decryption Terminal tick/decode beep
+  public playDecodeBeep(pitch: number = 880) {
+    if (this.muted) return;
+    this.initCtx();
+    if (!this.ctx) return;
+
+    try {
+      const now = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(pitch, now);
+      osc.frequency.exponentialRampToValueAtTime(pitch * 1.5, now + 0.06);
+
+      gain.gain.setValueAtTime(0.1, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.07);
+    } catch {}
+  }
 }
 
 export const sounds = new SoundManager();

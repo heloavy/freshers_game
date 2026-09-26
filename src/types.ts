@@ -32,6 +32,8 @@ export interface GameState {
   penalties: number; // seconds
   score: number;
   levelStartTime: number;
+  unlockedKeys?: number[]; // [1, 2, 3, 4, 5]
+  isKeyDecoded?: boolean;
 }
 
 // 16 Futuristic Zero-G Cyberpunk Team Avatars

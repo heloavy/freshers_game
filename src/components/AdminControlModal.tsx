@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { AdminMember, TeamLeaderboardEntry, TEAM_AVATARS } from '../types';
 import { supabaseService, DEFAULT_ADMINS } from '../services/supabaseService';
 import { sounds } from '../services/soundEffects';
+import { TREASURE_KEYS, FINAL_TREASURE_ANSWER } from '../services/treasureKeys';
 import {
   ShieldCheck,
   UserCheck,
@@ -723,6 +724,44 @@ export const AdminControlModal: React.FC<Props> = ({
                     <span>Open QR Code &amp; Share</span>
                   </button>
                 )}
+              </div>
+
+              {/* Section: Master Treasure Key & Passcode Verification */}
+              <div className="p-5 rounded-2xl bg-gradient-to-r from-amber-950/70 via-slate-900 to-yellow-950/70 border-2 border-amber-500/60 shadow-[0_0_25px_rgba(245,158,11,0.3)] space-y-4">
+                <div className="flex items-center justify-between border-b border-amber-500/30 pb-2">
+                  <div className="flex items-center gap-2 text-amber-300 font-mono text-xs uppercase tracking-wider font-bold">
+                    <Key className="w-4 h-4 text-amber-400" />
+                    <span>Treasure Hunt Decoded Passcode &amp; Answer</span>
+                  </div>
+                  <span className="px-2 py-0.5 rounded bg-amber-900/60 text-amber-200 border border-amber-400/40 text-[10px] font-mono font-bold">
+                    OFFICIAL TARGET ANSWER
+                  </span>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-xl bg-slate-950/90 border border-slate-800">
+                  <div>
+                    <div className="text-[10px] font-mono text-slate-400 uppercase">SYNTHESIZED TREASURE KEY:</div>
+                    <div className="text-xl sm:text-2xl font-display font-black text-amber-300 tracking-wider">
+                      {FINAL_TREASURE_ANSWER}
+                    </div>
+                    <div className="text-xs text-slate-400 font-mono mt-0.5">
+                      Event Announcement: Freshers 2026 on 30th (Sept 30, 2026)
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    {TREASURE_KEYS.map((k) => (
+                      <div key={k.id} className="text-center px-2 py-1 rounded bg-slate-900 border border-slate-800 font-mono text-[10px]" title={k.name}>
+                        <div className="text-xs">{k.icon}</div>
+                        <div className="text-emerald-400 font-bold">"{k.fragment.trim()}"</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <p className="text-[11px] text-slate-300 font-mono">
+                  When a winning team arrives at Mission Control, verify that their terminal displays this exact passcode to award them their physical treasure hunt prize.
+                </p>
               </div>
 
               {/* Section 1: Live Score & Penalty Adjuster */}
