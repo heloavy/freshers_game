@@ -6,7 +6,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ZeroGravityCanvas } from './components/ZeroGravityCanvas';
 import { TeamAuthScreen } from './components/TeamAuthScreen';
-import { Level1TowerStack } from './components/games/Level1TowerStack';
+import { Level1CyberQuiz } from './components/games/Level1CyberQuiz';
 import { Level2NQueens } from './components/games/Level2NQueens';
 import { Level3CodeWordle } from './components/games/Level3CodeWordle';
 import { Level4BugSmasherArcade } from './components/games/Level4BugSmasherArcade';
@@ -724,8 +724,11 @@ export default function App() {
         ) : (
           <div className="w-full flex flex-col items-center">
             {gameState.currentLevel === 1 && (
-              <Level1TowerStack
+              <Level1CyberQuiz
                 onComplete={(duration) => handleLevelComplete(duration)}
+                onApplyPenalty={(pts, sec, label) => handleApplyHintPenalty(pts, sec, label)}
+                teamId={gameState.teamId}
+                teamName={gameState.teamName}
               />
             )}
             {gameState.currentLevel === 2 && (

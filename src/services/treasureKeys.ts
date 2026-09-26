@@ -29,8 +29,8 @@ export const TREASURE_KEYS: TreasureKey[] = [
     accentClass: 'text-cyan-400',
     borderClass: 'border-cyan-500/60 shadow-[0_0_20px_rgba(6,182,212,0.4)]',
     bgClass: 'bg-cyan-950/40',
-    sourceSector: 'Sector 01 // Zero-G Tower Stack',
-    clue: 'Inaugural foundation cipher shard salvaged from the core stabilizer.',
+    sourceSector: 'Sector 01 // Tech Logic Matrix',
+    clue: 'Inaugural foundation cipher shard salvaged from the core diagnostic matrix.',
   },
   {
     id: 2,

@@ -422,8 +422,8 @@ export const TeamAuthScreen: React.FC<Props> = ({
           <div className="grid grid-cols-1 sm:grid-cols-5 gap-2.5 text-left font-mono text-xs">
             <div className="p-3 rounded-xl bg-slate-950/60 border border-cyan-500/30">
               <div className="text-cyan-400 font-bold text-[10px]">LEVEL 01</div>
-              <div className="text-white font-semibold text-xs mt-0.5">Tower Block Stack</div>
-              <div className="text-slate-500 text-[10px]">Slice &amp; Stack 5 Nodes</div>
+              <div className="text-white font-semibold text-xs mt-0.5">Tech Logic Matrix</div>
+              <div className="text-slate-500 text-[10px]">Solve 5 Diagnostic Nodes</div>
             </div>
 
             <div className="p-3 rounded-xl bg-slate-950/60 border border-purple-500/30">
